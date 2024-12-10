@@ -82,7 +82,7 @@ Hyprlang::CParseResult onNewButton(const char* K, const char* V) {
     }
 
     bool userfg  = false;
-    auto fgcolor = configStringToInt("");
+    auto fgcolor = configStringToInt("0");
 
     if (vars.size() == 5) {
         userfg  = true;
@@ -122,7 +122,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_color", Hyprlang::INT{*configStringToInt("rgba(33333388)")});
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_height", Hyprlang::INT{15});
-    HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_text_color", Hyprlang::INT{*configStringToInt("rgba(ffffffff)")});
+    HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:col.text", Hyprlang::INT{*configStringToInt("rgba(ffffffff)")});
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_text_size", Hyprlang::INT{10});
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_title_enabled", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(PHANDLE, "plugin:hyprbars:bar_text_font", Hyprlang::STRING{"Sans"});
@@ -146,8 +146,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 
     HyprlandAPI::reloadConfig();
 
-    /* HyprlandAPI::addNotification(PHANDLE, "[hyprbars] Initialized successfully!", CHyprColor{0.2, 1.0, 0.2, 1.0}, 5000); annoying and dumb as fuck.*/
-
+    HyprlandAPI::addNotification(PHANDLE, "[hyprbars] Initialized successfully!", CHyprColor{0.2, 1.0, 0.2, 1.0}, 5000);
     return {"hyprbars", "A plugin to add title bars to windows.", "Vaxry", "1.0"};
 }
 
