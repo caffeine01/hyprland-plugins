@@ -350,7 +350,7 @@ void CHyprBar::renderBarButtons(const Vector2D& bufferSize, const float scale) {
         const int Y      = currentPos.y;
         const int RADIUS = static_cast<int>(std::ceil(scaledButtonSize / 2.0));
 
-        cairo_set_source_rgba(CAIRO, button.col.r, button.col.g, button.col.b, button.col.a);
+        cairo_set_source_rgba(CAIRO, button.bgcol.r, button.bgcol.g, button.bgcol.b, button.bgcol.a);
         cairo_arc(CAIRO, X, Y + RADIUS, RADIUS, 0, 2 * M_PI);
         cairo_fill(CAIRO);
 
@@ -399,9 +399,14 @@ void CHyprBar::renderBarButtonsText(CBox* barBox, const float scale, const float
             // render icon
             const Vector2D BUFSIZE = {scaledButtonSize, scaledButtonSize};
 
-            const bool     LIGHT = button.col.r + button.col.g + button.col.b < 1;
+            auto           fgcolor = button.fgcol;
 
-            renderText(button.iconTex, button.icon, LIGHT ? CHyprColor(0xFFFFFFFF) : CHyprColor(0xFF000000), BUFSIZE, scale, button.size * 0.62);
+            if (fgcolor == CHyprColor(0, 0, 0, 0)) {
+                const bool LIGHT = button.bgcol.r + button.bgcol.g + button.bgcol.b < 1;
+                fgcolor          = LIGHT ? CHyprColor(0xFFFFFFFF) : CHyprColor(0xFF000000);
+            }
+
+            renderText(button.iconTex, button.icon, fgcolor, BUFSIZE, scale, button.size * 0.62);
         }
 
         if (button.iconTex->m_iTexID == 0)
