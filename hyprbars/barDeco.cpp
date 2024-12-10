@@ -130,11 +130,7 @@ void CHyprBar::onMouseDown(SCallbackInfo& info, IPointer::SButtonEvent e) {
 }
 
 void CHyprBar::onTouchDown(SCallbackInfo& info) {
-    if (m_pWindow.lock() != g_pCompositor->m_pLastWindow.lock())
-        return;
-
-    const auto         PWINDOW = m_pWindow.lock();
-    const auto         COORDS  = cursorRelativeToBar();
+    const auto         COORDS = cursorRelativeToBar();
 
     static auto* const PHEIGHT           = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_height")->getDataStaticPtr();
     static auto* const PBARBUTTONPADDING = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_button_padding")->getDataStaticPtr();
