@@ -82,7 +82,7 @@ Hyprlang::CParseResult onNewButton(const char* K, const char* V) {
     }
 
     bool userfg  = false;
-    auto fgcolor = configStringToInt("0");
+    auto fgcolor = configStringToInt("rgb(ffffff)");
 
     if (vars.size() == 5) {
         userfg  = true;
