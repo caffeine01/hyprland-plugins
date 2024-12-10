@@ -18,6 +18,9 @@ CHyprBar::CHyprBar(PHLWINDOW pWindow) : IHyprWindowDecoration(pWindow) {
 
     m_pTouchDownCallback = HyprlandAPI::registerCallbackDynamic(PHANDLE, "touchDown", [&](void* self, SCallbackInfo& info, std::any param) { onTouchDown(info); });
 
+    m_pTipDownCallback = HyprlandAPI::registerCallbackDynamic(PHANDLE, "tabletTip",
+                                                              [&](void* self, SCallbackInfo& info, std::any param) { onTipDown(info, std::any_cast<CTablet::STipEvent>(param)); });
+
     m_pMouseMoveCallback =
         HyprlandAPI::registerCallbackDynamic(PHANDLE, "mouseMove", [&](void* self, SCallbackInfo& info, std::any param) { onMouseMove(std::any_cast<Vector2D>(param)); });
 
@@ -29,6 +32,7 @@ CHyprBar::~CHyprBar() {
     damageEntire();
     HyprlandAPI::unregisterCallback(PHANDLE, m_pMouseButtonCallback);
     HyprlandAPI::unregisterCallback(PHANDLE, m_pTouchDownCallback);
+    HyprlandAPI::unregisterCallback(PHANDLE, m_pTipDownCallback);
     HyprlandAPI::unregisterCallback(PHANDLE, m_pMouseMoveCallback);
     std::erase(g_pGlobalState->bars, this);
 }
@@ -111,25 +115,23 @@ void CHyprBar::onMouseDown(SCallbackInfo& info, IPointer::SButtonEvent e) {
 
     // check if on a button
 
-    float offset = **PBARPADDING;
-
-    for (auto& b : g_pGlobalState->buttons) {
-        const auto BARBUF     = Vector2D{(int)assignedBoxGlobal().w, **PHEIGHT};
-        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - **PBARBUTTONPADDING - b.size - offset : offset), (BARBUF.y - b.size) / 2.0}.floor();
-
-        if (VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + b.size + **PBARBUTTONPADDING, currentPos.y + b.size)) {
-            // hit on close
-            g_pKeybindManager->m_mDispatchers["exec"](b.cmd);
-            return;
-        }
-
-        offset += **PBARBUTTONPADDING + b.size;
-    }
+    CHyprBar::doButtonPress();
 
     m_bDragPending = true;
 }
 
 void CHyprBar::onTouchDown(SCallbackInfo& info) {
+    CHyprBar::doButtonPress();
+}
+
+void CHyprBar::onTipDown(SCallbackInfo& info, CTablet::STipEvent e) {
+    HyprlandAPI::addNotification(PHANDLE, "[hyprbars] TIP DOWN", CHyprColor{0.2, 1.0, 0.2, 1.0}, 5000);
+    if (!e.in)
+        return;
+    CHyprBar::doButtonPress();
+}
+
+void CHyprBar::doButtonPress() {
     const auto         COORDS = cursorRelativeToBar();
 
     static auto* const PHEIGHT           = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_height")->getDataStaticPtr();

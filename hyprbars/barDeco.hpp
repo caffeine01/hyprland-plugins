@@ -6,6 +6,7 @@
 #include <hyprland/src/render/OpenGL.hpp>
 #include <hyprland/src/devices/IPointer.hpp>
 #include <hyprland/src/devices/ITouch.hpp>
+#include <hyprland/src/devices/Tablet.hpp>
 #include "globals.hpp"
 
 class CHyprBar : public IHyprWindowDecoration {
@@ -61,12 +62,15 @@ class CHyprBar : public IHyprWindowDecoration {
     void                      renderBarButtons(const Vector2D& bufferSize, const float scale);
     void                      renderBarButtonsText(CBox* barBox, const float scale, const float a);
     void                      onMouseDown(SCallbackInfo& info, IPointer::SButtonEvent e);
+    void                      onTipDown(SCallbackInfo& info, CTablet::STipEvent e);
     void                      onTouchDown(SCallbackInfo& info);
+    void                      doButtonPress();
     void                      onMouseMove(Vector2D coords);
     CBox                      assignedBoxGlobal();
 
     SP<HOOK_CALLBACK_FN>      m_pMouseButtonCallback;
     SP<HOOK_CALLBACK_FN>      m_pTouchDownCallback;
+    SP<HOOK_CALLBACK_FN>      m_pTipDownCallback;
     SP<HOOK_CALLBACK_FN>      m_pMouseMoveCallback;
 
     std::string               m_szLastTitle;
