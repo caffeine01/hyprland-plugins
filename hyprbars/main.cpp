@@ -75,14 +75,17 @@ Hyprlang::CParseResult onNewButton(const char* K, const char* V) {
     }
 
     auto bgcolor = configStringToInt(vars[1]);
-    auto fgcolor = configStringToInt("");
 
     if (!bgcolor) {
         result.setError("invalid bgcolor");
         return result;
     }
 
+    bool userfg  = false;
+    auto fgcolor = configStringToInt("");
+
     if (vars.size() == 5) {
+        userfg  = true;
         fgcolor = configStringToInt(vars[4]);
         if (!fgcolor) {
             result.setError("invalid fgcolor");
@@ -90,7 +93,7 @@ Hyprlang::CParseResult onNewButton(const char* K, const char* V) {
         }
     }
 
-    g_pGlobalState->buttons.push_back(SHyprButton{vars[3], *fgcolor, *bgcolor, size, vars[2]});
+    g_pGlobalState->buttons.push_back(SHyprButton{vars[3], userfg, *fgcolor, *bgcolor, size, vars[2]});
 
     for (auto& b : g_pGlobalState->bars) {
         b->m_bButtonsDirty = true;

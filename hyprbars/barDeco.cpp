@@ -399,14 +399,14 @@ void CHyprBar::renderBarButtonsText(CBox* barBox, const float scale, const float
             // render icon
             const Vector2D BUFSIZE = {scaledButtonSize, scaledButtonSize};
 
-            auto           fgcolor = button.fgcol;
+            auto           fgcol = button.fgcol;
 
-            if (fgcolor == CHyprColor(0, 0, 0, 0)) {
+            if (!button.userfg) {
                 const bool LIGHT = button.bgcol.r + button.bgcol.g + button.bgcol.b < 1;
-                fgcolor          = LIGHT ? CHyprColor(0xFFFFFFFF) : CHyprColor(0xFF000000);
+                fgcol            = LIGHT ? CHyprColor(0xFFFFFFFF) : CHyprColor(0xFF000000);
             }
 
-            renderText(button.iconTex, button.icon, fgcolor, BUFSIZE, scale, button.size * 0.62);
+            renderText(button.iconTex, button.icon, fgcol, BUFSIZE, scale, button.size * 0.62);
         }
 
         if (button.iconTex->m_iTexID == 0)

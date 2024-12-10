@@ -7,6 +7,7 @@ inline HANDLE PHANDLE = nullptr;
 
 struct SHyprButton {
     std::string  cmd     = "";
+    bool         userfg  = false;
     CHyprColor   fgcol   = CHyprColor(0, 0, 0, 0);
     CHyprColor   bgcol   = CHyprColor(0, 0, 0, 0);
     float        size    = 10;
