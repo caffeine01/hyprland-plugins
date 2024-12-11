@@ -18,11 +18,6 @@ CHyprBar::CHyprBar(PHLWINDOW pWindow) : IHyprWindowDecoration(pWindow) {
 
     m_pTouchDownCallback = HyprlandAPI::registerCallbackDynamic(PHANDLE, "touchDown", [&](void* self, SCallbackInfo& info, std::any param) { onTouchDown(info); });
 
-    /* Not implemented (yet)
-    m_pTipDownCallback = HyprlandAPI::registerCallbackDynamic(PHANDLE, "tabletTip",
-                                                              [&](void* self, SCallbackInfo& info, std::any param) { onTipDown(info, std::any_cast<CTablet::STipEvent>(param)); });
-    */
-
     m_pMouseMoveCallback =
         HyprlandAPI::registerCallbackDynamic(PHANDLE, "mouseMove", [&](void* self, SCallbackInfo& info, std::any param) { onMouseMove(std::any_cast<Vector2D>(param)); });
 
@@ -34,7 +29,6 @@ CHyprBar::~CHyprBar() {
     damageEntire();
     HyprlandAPI::unregisterCallback(PHANDLE, m_pMouseButtonCallback);
     HyprlandAPI::unregisterCallback(PHANDLE, m_pTouchDownCallback);
-    /* HyprlandAPI::unregisterCallback(PHANDLE, m_pTipDownCallback); */
     HyprlandAPI::unregisterCallback(PHANDLE, m_pMouseMoveCallback);
     std::erase(g_pGlobalState->bars, this);
 }
@@ -125,14 +119,6 @@ void CHyprBar::onTouchDown(SCallbackInfo& info) {
         return;
     CHyprBar::doButtonPress(COORDS);
 }
-
-/*
-void CHyprBar::onTipDown(SCallbackInfo& info, CTablet::STipEvent e) {
-    if (!e.in)
-        return;
-    CHyprBar::doButtonPress(cursorRelativeToBar());
-}
-*/
 
 void CHyprBar::doButtonPress(Vector2D coords) {
     if (m_pWindow.lock() != g_pCompositor->m_pLastWindow.lock())
