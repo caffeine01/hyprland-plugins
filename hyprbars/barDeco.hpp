@@ -62,22 +62,22 @@ class CHyprBar : public IHyprWindowDecoration {
     void                      renderBarButtons(const Vector2D& bufferSize, const float scale);
     void                      renderBarButtonsText(CBox* barBox, const float scale, const float a);
     void                      onMouseDown(SCallbackInfo& info, IPointer::SButtonEvent e);
-    void                      onTipDown(SCallbackInfo& info, CTablet::STipEvent e);
-    void                      onTouchDown(SCallbackInfo& info);
-    void                      doButtonPress();
-    void                      onMouseMove(Vector2D coords);
-    CBox                      assignedBoxGlobal();
+    /* void                      onTipDown(SCallbackInfo& info, CTablet::STipEvent e); */
+    void                 onTouchDown(SCallbackInfo& info);
+    void                 doButtonPress(Vector2D coords);
+    void                 onMouseMove(Vector2D coords);
+    CBox                 assignedBoxGlobal();
 
-    SP<HOOK_CALLBACK_FN>      m_pMouseButtonCallback;
-    SP<HOOK_CALLBACK_FN>      m_pTouchDownCallback;
-    SP<HOOK_CALLBACK_FN>      m_pTipDownCallback;
-    SP<HOOK_CALLBACK_FN>      m_pMouseMoveCallback;
+    SP<HOOK_CALLBACK_FN> m_pMouseButtonCallback;
+    SP<HOOK_CALLBACK_FN> m_pTouchDownCallback;
+    /* SP<HOOK_CALLBACK_FN>      m_pTipDownCallback; */
+    SP<HOOK_CALLBACK_FN> m_pMouseMoveCallback;
 
-    std::string               m_szLastTitle;
+    std::string          m_szLastTitle;
 
-    bool                      m_bDraggingThis  = false;
-    bool                      m_bDragPending   = false;
-    bool                      m_bCancelledDown = false;
+    bool                 m_bDraggingThis  = false;
+    bool                 m_bDragPending   = false;
+    bool                 m_bCancelledDown = false;
 
     // for dynamic updates
     int m_iLastHeight = 0;
