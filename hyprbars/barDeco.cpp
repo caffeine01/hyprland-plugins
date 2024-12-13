@@ -3,6 +3,7 @@
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/Window.hpp>
 #include <hyprland/src/helpers/MiscFunctions.hpp>
+#include <hyprland/src/managers/input/InputManager.hpp>
 #include <pango/pangocairo.h>
 
 #include "globals.hpp"
@@ -13,10 +14,17 @@ CHyprBar::CHyprBar(PHLWINDOW pWindow) : IHyprWindowDecoration(pWindow) {
     const auto PMONITOR       = pWindow->m_pMonitor.lock();
     PMONITOR->scheduledRecalc = true;
 
+    m_pTouchDownCallback = HyprlandAPI::registerCallbackDynamic(
+        PHANDLE, "touchDown", [&](void* self, SCallbackInfo& info, std::any param) { onTouchDown(info, std::any_cast<ITouch::SDownEvent>(param)); });
+
+    m_pTouchUpCallback =
+        HyprlandAPI::registerCallbackDynamic(PHANDLE, "touchUp", [&](void* self, SCallbackInfo& info, std::any param) { onTouchUp(info, std::any_cast<ITouch::SUpEvent>(param)); });
+
+    m_pTouchMoveCallback = HyprlandAPI::registerCallbackDynamic(
+        PHANDLE, "touchMove", [&](void* self, SCallbackInfo& info, std::any param) { onTouchMove(info, std::any_cast<ITouch::SMotionEvent>(param)); });
+
     m_pMouseButtonCallback = HyprlandAPI::registerCallbackDynamic(
         PHANDLE, "mouseButton", [&](void* self, SCallbackInfo& info, std::any param) { onMouseDown(info, std::any_cast<IPointer::SButtonEvent>(param)); });
-
-    m_pTouchDownCallback = HyprlandAPI::registerCallbackDynamic(PHANDLE, "touchDown", [&](void* self, SCallbackInfo& info, std::any param) { onTouchDown(info); });
 
     m_pMouseMoveCallback =
         HyprlandAPI::registerCallbackDynamic(PHANDLE, "mouseMove", [&](void* self, SCallbackInfo& info, std::any param) { onMouseMove(std::any_cast<Vector2D>(param)); });
@@ -29,6 +37,8 @@ CHyprBar::~CHyprBar() {
     damageEntire();
     HyprlandAPI::unregisterCallback(PHANDLE, m_pMouseButtonCallback);
     HyprlandAPI::unregisterCallback(PHANDLE, m_pTouchDownCallback);
+    HyprlandAPI::unregisterCallback(PHANDLE, m_pTouchUpCallback);
+    HyprlandAPI::unregisterCallback(PHANDLE, m_pTouchMoveCallback);
     HyprlandAPI::unregisterCallback(PHANDLE, m_pMouseMoveCallback);
     std::erase(g_pGlobalState->bars, this);
 }
@@ -59,16 +69,12 @@ std::string CHyprBar::getDisplayName() {
 
 void CHyprBar::onMouseDown(SCallbackInfo& info, IPointer::SButtonEvent e) {
     if (m_pWindow.lock() != g_pCompositor->m_pLastWindow.lock())
-      return;
+        return;
 
     const auto         PWINDOW = m_pWindow.lock();
     const auto         COORDS  = cursorRelativeToBar();
 
-    static auto* const PHEIGHT       = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_height")->getDataStaticPtr();
-    static auto* const PALIGNBUTTONS = (Hyprlang::STRING const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_buttons_alignment")->getDataStaticPtr();
-
-    const bool         BUTTONSRIGHT = std::string{*PALIGNBUTTONS} != "left";
-
+    static auto* const PHEIGHT = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_height")->getDataStaticPtr();
     if (!VECINRECT(COORDS, 0, 0, assignedBoxGlobal().w, **PHEIGHT - 1)) {
         if (m_bDraggingThis) {
             g_pKeybindManager->m_mDispatchers["mouse"]("0movewindow");
@@ -112,12 +118,69 @@ void CHyprBar::onMouseDown(SCallbackInfo& info, IPointer::SButtonEvent e) {
     m_bDragPending = true;
 }
 
-void CHyprBar::onTouchDown(SCallbackInfo& info) {
-    const auto         COORDS  = cursorRelativeToBar();
-    static auto* const PHEIGHT = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_height")->getDataStaticPtr();
-    if (!VECINRECT(COORDS, 0, 0, assignedBoxGlobal().w, **PHEIGHT - 1))
+void CHyprBar::onTouchDown(SCallbackInfo& info, ITouch::SDownEvent e) {
+    if (m_pWindow.lock() != g_pCompositor->m_pLastWindow.lock())
         return;
+
+    const auto         PWINDOW = m_pWindow.lock();
+    const auto         COORDS  = cursorRelativeToBar();
+
+    static auto* const PHEIGHT = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_height")->getDataStaticPtr();
+    if (!VECINRECT(COORDS, 0, 0, assignedBoxGlobal().w, **PHEIGHT - 1)) {
+        if (m_bDraggingThis) {
+            g_pCompositor->warpCursorTo(Vector2D(e.pos.x, e.pos.y));
+            g_pInputManager->mouseMoveUnified(e.timeMs);
+            g_pKeybindManager->m_mDispatchers["mouse"]("0movewindow");
+            Debug::log(LOG, "[hyprbars] Dragging ended on touchdown {:x}", (uintptr_t)PWINDOW.get());
+        }
+
+        m_bDraggingThis = false;
+        m_bDragPending  = false;
+        m_bTouchEv      = false;
+        return;
+    }
+
+    g_pCompositor->warpCursorTo(Vector2D(e.pos.x, e.pos.y));
+
+    if (PWINDOW->m_bIsFloating)
+        g_pCompositor->changeWindowZOrder(PWINDOW, true);
+
+    // do the button press
+
     CHyprBar::doButtonPress(COORDS);
+
+    m_bTouchEv     = true;
+    m_bDragPending = true;
+}
+
+void CHyprBar::onTouchUp(SCallbackInfo& info, ITouch::SUpEvent e) {
+    if (m_pWindow.lock() != g_pCompositor->m_pLastWindow.lock())
+        return;
+    const auto PWINDOW = m_pWindow.lock();
+
+    if (m_bCancelledDown)
+        info.cancelled = true;
+
+    m_bCancelledDown = false;
+
+    if (m_bDraggingThis) {
+        g_pKeybindManager->m_mDispatchers["mouse"]("0movewindow");
+        m_bDraggingThis = false;
+
+        Debug::log(LOG, "[hyprbars] Dragging ended on touchup {:x}", (uintptr_t)PWINDOW.get());
+    }
+
+    m_bDragPending = false;
+    m_bTouchEv     = false;
+}
+
+void CHyprBar::onTouchMove(SCallbackInfo& info, ITouch::SMotionEvent e) {
+    if (m_bDragPending && m_bTouchEv) {
+        g_pInputManager->mouseMoveUnified(e.timeMs);
+        g_pKeybindManager->m_mDispatchers["mouse"]("1movewindow");
+        m_bDraggingThis = true;
+        return;
+    }
 }
 
 void CHyprBar::doButtonPress(Vector2D coords) {
@@ -145,13 +208,11 @@ void CHyprBar::doButtonPress(Vector2D coords) {
 }
 
 void CHyprBar::onMouseMove(Vector2D coords) {
-    if (m_bDragPending) {
+    if (m_bDragPending && !m_bTouchEv) {
         m_bDragPending = false;
         g_pKeybindManager->m_mDispatchers["mouse"]("1movewindow");
         m_bDraggingThis = true;
-
         Debug::log(LOG, "[hyprbars] Dragging initiated on {:x}", (uintptr_t)m_pWindow.lock().get());
-
         return;
     }
 }
