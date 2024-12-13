@@ -58,6 +58,9 @@ std::string CHyprBar::getDisplayName() {
 }
 
 void CHyprBar::onMouseDown(SCallbackInfo& info, IPointer::SButtonEvent e) {
+    if (m_pWindow.lock() != g_pCompositor->m_pLastWindow.lock())
+      return;
+
     const auto         PWINDOW = m_pWindow.lock();
     const auto         COORDS  = cursorRelativeToBar();
 
@@ -110,9 +113,6 @@ void CHyprBar::onMouseDown(SCallbackInfo& info, IPointer::SButtonEvent e) {
 }
 
 void CHyprBar::onTouchDown(SCallbackInfo& info) {
-    if (m_pWindow.lock() != g_pCompositor->m_pLastWindow.lock())
-        return;
-
     const auto         COORDS  = cursorRelativeToBar();
     static auto* const PHEIGHT = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_height")->getDataStaticPtr();
     if (!VECINRECT(COORDS, 0, 0, assignedBoxGlobal().w, **PHEIGHT - 1))
@@ -121,11 +121,6 @@ void CHyprBar::onTouchDown(SCallbackInfo& info) {
 }
 
 void CHyprBar::doButtonPress(Vector2D coords) {
-    if (m_pWindow.lock() != g_pCompositor->m_pLastWindow.lock())
-        return;
-
-    const auto         PWINDOW = m_pWindow.lock();
-
     static auto* const PHEIGHT           = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_height")->getDataStaticPtr();
     static auto* const PBARBUTTONPADDING = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_button_padding")->getDataStaticPtr();
     static auto* const PBARPADDING       = (Hyprlang::INT* const*)HyprlandAPI::getConfigValue(PHANDLE, "plugin:hyprbars:bar_padding")->getDataStaticPtr();
