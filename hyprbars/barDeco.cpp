@@ -134,6 +134,11 @@ void CHyprBar::onTouchDown(SCallbackInfo& info, ITouch::SDownEvent e) {
             Debug::log(LOG, "[hyprbars] Dragging ended on touchdown {:x}", (uintptr_t)PWINDOW.get());
         }
 
+        if (m_bCancelledDown)
+          info.cancelled = true;
+
+        m_bCancelledDown = false;
+
         m_bDraggingThis = false;
         m_bDragPending  = false;
         m_bTouchEv      = false;
