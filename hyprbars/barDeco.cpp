@@ -134,18 +134,11 @@ void CHyprBar::onTouchDown(SCallbackInfo& info, ITouch::SDownEvent e) {
             Debug::log(LOG, "[hyprbars] Dragging ended on touchdown {:x}", (uintptr_t)PWINDOW.get());
         }
 
-        if (m_bCancelledDown)
-          info.cancelled = true;
-
-        m_bCancelledDown = false;
-
         m_bDraggingThis = false;
         m_bDragPending  = false;
         m_bTouchEv      = false;
         return;
     }
-
-    g_pCompositor->warpCursorTo(Vector2D(e.pos.x, e.pos.y));
 
     if (PWINDOW->m_bIsFloating)
         g_pCompositor->changeWindowZOrder(PWINDOW, true);
